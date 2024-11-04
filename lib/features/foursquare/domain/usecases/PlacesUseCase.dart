@@ -5,6 +5,5 @@ class PlacesUseCase {
 
   PlacesUseCase(this.repository);
 
-  run(String query, double lat, double lng) =>
-      repository.places(query, lat, lng);
+  run() => repository.places();
 }

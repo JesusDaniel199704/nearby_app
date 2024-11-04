@@ -7,6 +7,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:nearby_app/features/foursquare/domain/entities/place.dart';
 import 'package:nearby_app/features/foursquare/domain/usecases/PlacesUseCase.dart';
 import 'package:nearby_app/features/foursquare/domain/usecases/SearchPlacesUseCase.dart';
+import 'package:nearby_app/features/foursquare/domain/usecases/nearbyPlacesUseCase.dart';
 import 'package:nearby_app/features/geolocator/domain/entities/Location.dart';
 import 'package:nearby_app/features/geolocator/domain/useCases/GeolocatorUseCases.dart';
 
@@ -17,10 +18,9 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
   final GeolocatorUseCases geolocatorUseCase;
   final PlacesUseCase placeUseCase;
   final SearchPlacesUseCase searchPlacesUseCase;
-  final List places = [];
-
-  LocationBloc(
-      this.geolocatorUseCase, this.placeUseCase, this.searchPlacesUseCase)
+  final NearbyPlacesUseCase nearbyPlacesUseCase;
+  LocationBloc(this.geolocatorUseCase, this.placeUseCase,
+      this.searchPlacesUseCase, this.nearbyPlacesUseCase)
       : super(LocationInitial()) {
     on<LocationInitEvent>((event, emit) {
       Completer<GoogleMapController> controller =
@@ -33,17 +33,9 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
       );
     });
 
-    on<PlacesEvent>((event, emit) async {
+    on<OnPlacesEvent>((event, emit) async {
       try {
-        List<Place> places = await placeUseCase.run(
-          event.namePlace,
-          event.latitude,
-          event.longitude,
-        );
-
-        BitmapDescriptor imageMarker = await geolocatorUseCase.createMarker.run(
-          'assets/img/location.png',
-        );
+        List<Place> places = await placeUseCase.run();
 
         Set<Marker> markersSet = {};
         print("markers ${markersSet.length}");
@@ -55,7 +47,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
               results.geocodes?.main?.longitude?.toDouble() ?? 0.0,
               'My position',
               '',
-              imageMarker,
+              () {},
             );
             markersSet.add(marker);
           });
@@ -75,9 +67,11 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
 
     on<FindPosition>(((event, emit) async {
       Position position = await geolocatorUseCase.findPosition.run();
-
+      dynamic nearbyPlaces =
+          await nearbyPlacesUseCase.run(position.latitude, position.longitude);
+      print("nearbyPlaces: $nearbyPlaces");
       BitmapDescriptor imageMarker = await geolocatorUseCase.createMarker.run(
-        'assets/img/locations.png',
+        'assets/img/location.png',
       );
       Marker marker = geolocatorUseCase.getMarker.run(
         'MyLocation',
@@ -85,7 +79,15 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
         position.longitude,
         'My position',
         '',
-        imageMarker,
+        () async {
+          add(SelectMarkerEvent(MarkerId('MyLocation')));
+        },
+      );
+      add(
+        ChangeMapCameraPosition(
+          lat: position.latitude,
+          lng: position.longitude,
+        ),
       );
       emit(state.copyWith(
         position: position,
@@ -96,15 +98,32 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
       emit(state.copyWith(
         position: position,
       ));
-      add(
-        ChangeMapCameraPosition(
-          lat: position.latitude,
-          lng: position.longitude,
-        ),
-      );
-      print('Position lat: ${position.latitude}');
-      print('Position lon: ${position.longitude}');
     }));
+
+    on<SelectMarkerEvent>((event, emit) {
+      emit(state.copyWith(
+        selectedMarker: event.marker,
+        isModalVisible: true,
+      ));
+    });
+
+    on<IsSearching>((event, emit) {
+      emit(state.copyWith(
+        isButtonVisible: true,
+      ));
+    });
+
+    on<NotSearching>((event, emit) {
+      emit(state.copyWith(
+        isButtonVisible: false,
+      ));
+    });
+
+    on<OnCloseModal>((event, emit) {
+      emit(state.copyWith(
+        isModalVisible: false,
+      ));
+    });
 
     on<ChangeMapCameraPosition>(
       (event, emit) async {

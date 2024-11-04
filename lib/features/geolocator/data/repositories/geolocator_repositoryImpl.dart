@@ -3,9 +3,9 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:nearby_app/features/geolocator/domain/entities/Location.dart';
-import 'package:nearby_app/features/geolocator/domain/repositories/location_repository.dart';
+import 'package:nearby_app/features/geolocator/domain/repositories/geolocator_repository.dart';
 
-class LocationRepositoryImpl implements LocationRepository {
+class LocationRepositoryImpl implements GeolocatorRepository {
   @override
   Future<BitmapDescriptor> createMarkerFromAsset(String path) async {
     ImageConfiguration configuration = const ImageConfiguration();
@@ -16,11 +16,11 @@ class LocationRepositoryImpl implements LocationRepository {
 
   @override
   Marker getMarker(String markerId, double lat, double lng, String title,
-      String content, BitmapDescriptor imageMarker) {
+      String content, Function() onTap) {
     MarkerId id = MarkerId(markerId);
     Marker marker = Marker(
         markerId: id,
-        icon: imageMarker,
+        onTap: onTap,
         position: LatLng(lat, lng),
         infoWindow: InfoWindow(title: title));
     return marker;

@@ -3,9 +3,10 @@ import 'package:nearby_app/features/foursquare/data/repositories/places_reposito
 import 'package:nearby_app/features/foursquare/domain/repositories/places_repository.dart';
 import 'package:nearby_app/features/foursquare/domain/usecases/PlacesUseCase.dart';
 import 'package:nearby_app/features/foursquare/domain/usecases/SearchPlacesUseCase.dart';
-import 'package:nearby_app/features/geolocator/data/repositories/location_repositoryImpl.dart'
+import 'package:nearby_app/features/foursquare/domain/usecases/nearbyPlacesUseCase.dart';
+import 'package:nearby_app/features/geolocator/data/repositories/geolocator_repositoryImpl.dart'
     as repository;
-import 'package:nearby_app/features/geolocator/domain/repositories/location_repository.dart';
+import 'package:nearby_app/features/geolocator/domain/repositories/geolocator_repository.dart';
 import 'package:nearby_app/features/geolocator/domain/useCases/CreateMarkerUseCase.dart';
 import 'package:nearby_app/features/geolocator/domain/useCases/GeolocatorUseCases.dart';
 import 'package:nearby_app/features/geolocator/domain/useCases/GetMarkerUseCase.dart';
@@ -16,11 +17,15 @@ import '../features/geolocator/domain/useCases/getLocationUsecase.dart';
 @module
 abstract class Appmodule {
   @injectable
-  LocationRepository get locationRepository =>
+  GeolocatorRepository get locationRepository =>
       repository.LocationRepositoryImpl();
 
   @injectable
   PlacesRepository get placeRepository => PlacesRepositoryImpl();
+
+  @injectable
+  NearbyPlacesUseCase get nearbyPlacesUseCase =>
+      NearbyPlacesUseCase(placeRepository);
 
   @injectable
   GeolocatorUseCases get geolocatorUseCase => GeolocatorUseCases(

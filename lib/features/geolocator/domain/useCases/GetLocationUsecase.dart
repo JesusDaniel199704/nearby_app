@@ -1,9 +1,9 @@
-import 'package:nearby_app/features/geolocator/domain/repositories/location_repository.dart';
+import 'package:nearby_app/features/geolocator/domain/repositories/geolocator_repository.dart';
 
 class FindPositionUseCase {
-  final LocationRepository repository;
+  final GeolocatorRepository geolocatorRepository;
 
-  FindPositionUseCase(this.repository);
+  FindPositionUseCase(this.geolocatorRepository);
 
-  run() => repository.findPosition();
+  run() => geolocatorRepository.findPosition();
 }

@@ -28,14 +28,16 @@ class OnSearchPlacesEvent extends LocationEvent {
   });
 }
 
-class PlacesEvent extends LocationEvent {
-  final String namePlace;
-  final double latitude;
-  final double longitude;
+class OnPlacesEvent extends LocationEvent {}
 
-  PlacesEvent({
-    required this.namePlace,
-    required this.latitude,
-    required this.longitude,
-  });
+class OnCloseModal extends LocationEvent {}
+
+class IsSearching extends LocationEvent {}
+
+class NotSearching extends LocationEvent {}
+
+class SelectMarkerEvent extends LocationEvent {
+  final MarkerId marker;
+
+  SelectMarkerEvent(this.marker);
 }
