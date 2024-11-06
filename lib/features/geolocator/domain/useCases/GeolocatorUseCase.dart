@@ -1,10 +1,10 @@
 import 'package:nearby_app/features/geolocator/domain/useCases/GetMarkerUseCase.dart';
 import 'package:nearby_app/features/geolocator/domain/useCases/getLocationUsecase.dart';
 
-class GeolocatorUseCases {
+class GeolocatorUseCase {
   FindPositionUseCase findPosition;
   GetMarkerUseCase getMarker;
-  GeolocatorUseCases({
+  GeolocatorUseCase({
     required this.findPosition,
     required this.getMarker,
   });

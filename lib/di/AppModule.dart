@@ -6,7 +6,7 @@ import 'package:nearby_app/features/places/domain/usecases/NearbyPlacesUseCase.d
 import 'package:nearby_app/features/geolocator/data/repositories/geolocator_repositoryImpl.dart'
     as repository;
 import 'package:nearby_app/features/geolocator/domain/repositories/geolocator_repository.dart';
-import 'package:nearby_app/features/geolocator/domain/useCases/GeolocatorUseCases.dart';
+import 'package:nearby_app/features/geolocator/domain/useCases/GeolocatorUseCase.dart';
 import 'package:nearby_app/features/geolocator/domain/useCases/GetMarkerUseCase.dart';
 
 import '../features/geolocator/domain/useCases/getLocationUsecase.dart';
@@ -25,7 +25,7 @@ abstract class Appmodule {
       NearbyPlacesUseCase(placeRepository);
 
   @injectable
-  GeolocatorUseCases get geolocatorUseCase => GeolocatorUseCases(
+  GeolocatorUseCase get geolocatorUseCase => GeolocatorUseCase(
         findPosition: FindPositionUseCase(locationRepository),
         getMarker: GetMarkerUseCase(locationRepository),
       );

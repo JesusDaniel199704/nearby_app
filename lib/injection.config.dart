@@ -19,7 +19,7 @@ import 'package:nearby_app/features/places/domain/usecases/SearchPlacesUseCase.d
     as _i1019;
 import 'package:nearby_app/features/geolocator/domain/repositories/geolocator_repository.dart'
     as _i739;
-import 'package:nearby_app/features/geolocator/domain/useCases/GeolocatorUseCases.dart'
+import 'package:nearby_app/features/geolocator/domain/useCases/GeolocatorUseCase.dart'
     as _i252;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -37,7 +37,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i739.GeolocatorRepository>(() => appmodule.locationRepository);
     gh.factory<_i337.PlacesRepository>(() => appmodule.placeRepository);
     gh.factory<_i848.NearbyPlacesUseCase>(() => appmodule.nearbyPlacesUseCase);
-    gh.factory<_i252.GeolocatorUseCases>(() => appmodule.geolocatorUseCase);
+    gh.factory<_i252.GeolocatorUseCase>(() => appmodule.geolocatorUseCase);
     gh.factory<_i1019.SearchPlacesUseCase>(() => appmodule.searchPlacesUseCase);
     return this;
   }

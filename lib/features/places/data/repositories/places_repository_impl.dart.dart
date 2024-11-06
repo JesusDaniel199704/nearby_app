@@ -12,7 +12,8 @@ class PlacesRepositoryImpl implements PlacesRepository {
   Future<List<Result>> searchPlaces(
       String query, double latitude, double longitude) async {
     final response = await http.get(
-      Uri.parse("$nearby?ll=$latitude,$longitude&radius=1000?query=$query"),
+      Uri.parse(
+          "$nearby?ll=$latitude,$longitude&hacc=10&query=$query&limit=30"),
       headers: {
         "Accept": "application/json",
         "Authorization": ApiConfig.API_NEARBY,
@@ -30,10 +31,9 @@ class PlacesRepositoryImpl implements PlacesRepository {
   @override
   Future<List<Result>> fetchNearbyPlaces(
       double latitude, double longitude) async {
-    const String url = 'https://api.foursquare.com/v3/places/nearby';
     try {
       final response = await http.get(
-        Uri.parse('$url?ll=$latitude,$longitude&radius=1000'),
+        Uri.parse('$nearby?ll=$latitude,$longitude&hacc=10&limit=30'),
         headers: {
           'Authorization': ApiConfig.API_NEARBY,
           'Accept': 'application/json',
@@ -48,7 +48,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         throw Exception('Error load fetchNearbyPlace: ${response.statusCode}');
       }
     } catch (e) {
-      return throw Exception('Error load fetchNearbyPlace: ${e}');
+      return throw Exception('Error load fetchNearbyPlace: $e');
     }
   }
 }
