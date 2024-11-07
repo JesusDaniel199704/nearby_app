@@ -69,13 +69,13 @@ dependencies:
 ### Geolocation
   - Get the current location
   - Monitor location changes
-  -Check permissions and GPS status
+  - Check permissions and GPS status
 
 ### Place Search
   - Search by name or category
   - Real-time display on the map
   - Filter by available categories
-  - 
+    
 ### User Interface
   - Responsive design
   - Status indicators (loading, error)
