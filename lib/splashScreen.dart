@@ -9,8 +9,8 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  @override
   bool _isLoading = true;
+  @override
   void initState() {
     super.initState();
     _loadData();

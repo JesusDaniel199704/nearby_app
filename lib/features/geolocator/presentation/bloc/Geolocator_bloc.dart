@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:nearby_app/features/places/domain/entities/place.dart';
-import 'package:nearby_app/features/places/domain/usecases/SearchPlacesUseCase.dart';
 import 'package:nearby_app/features/places/domain/usecases/NearbyPlacesUseCase.dart';
 import 'package:nearby_app/features/geolocator/domain/useCases/GeolocatorUseCase.dart';
 
@@ -14,19 +13,15 @@ part 'Geolocator_state.dart';
 
 class GeolocatorBloc extends Bloc<GeolocatorEvent, GeolocatorState> {
   final GeolocatorUseCase geolocatorUseCase;
-  final SearchPlacesUseCase searchPlacesUseCase;
   final NearbyPlacesUseCase nearbyPlacesUseCase;
   final Connectivity _connectivity = Connectivity();
   StreamSubscription? _connectivitySubscription;
+  Position? position;
 
   GeolocatorBloc(
     this.geolocatorUseCase,
-    this.searchPlacesUseCase,
     this.nearbyPlacesUseCase,
   ) : super(LocationInitial()) {
-    Position? position;
-    List<Result> tempNearbyPlace = [];
-
     _connectivitySubscription =
         _connectivity.onConnectivityChanged.listen((result) {
       add(CheckConnectivityEvent());
@@ -35,7 +30,6 @@ class GeolocatorBloc extends Bloc<GeolocatorEvent, GeolocatorState> {
     on<CheckGpsStatusEvent>((event, emit) async {
       final isEnabled = await Geolocator.isLocationServiceEnabled();
       emit(state.copyWith(hasGpsEnabled: isEnabled));
-
       if (!isEnabled) {
         emit(state.copyWith(
           errorMessage: 'GPS is disabled. Please enable location services.',
@@ -107,41 +101,51 @@ class GeolocatorBloc extends Bloc<GeolocatorEvent, GeolocatorState> {
             return;
           }
 
-          Set<Marker> markersSet = {};
           Set<String> categories = {};
-
+          List<Category> listCategory = [];
           position = await geolocatorUseCase.findPosition.run();
+          if (position != null) {
+            final controller = await state.controller?.future;
+            if (controller != null) {
+              await controller.animateCamera(
+                CameraUpdate.newCameraPosition(
+                  CameraPosition(
+                    target: LatLng(position!.latitude, position!.longitude),
+                    zoom: 15,
+                  ),
+                ),
+              );
+            }
+            List<Result> nearbyPlaces = await nearbyPlacesUseCase.run(
+                position?.latitude ?? 0.0, position?.longitude ?? 0.0);
 
-          List<Result> nearbyPlaces = await searchPlacesUseCase.run(
-              '', position?.latitude ?? 0.0, position?.longitude ?? 0.0);
+            final markers = _createMarkersForCurrentPosition(position!);
 
-          for (var place in nearbyPlaces) {
-            place.categories?.forEach((category) {
-              if (category.shortName != null) {
-                categories.add(category.shortName!);
-              }
-            });
+            emit(state.copyWith(
+              position: position,
+              markers: markers,
+              cameraPosition: CameraPosition(
+                target: LatLng(position!.latitude, position!.longitude),
+                zoom: 15,
+              ),
+            ));
+
+            for (var place in nearbyPlaces) {
+              place.categories?.forEach((category) {
+                listCategory.add(category);
+                if (category.shortName != null) {
+                  categories.add(category.shortName!);
+                }
+              });
+            }
+
+            emit(state.copyWith(
+              position: position,
+              nearbyPlaces: nearbyPlaces,
+              availableCategories: categories,
+              markers: _createMarkersFromPlaces(nearbyPlaces),
+            ));
           }
-
-          Marker marker = geolocatorUseCase.getMarker.run(
-            'MyLocation',
-            position?.latitude ?? 0.0,
-            position?.longitude ?? 0.0,
-            'My position',
-            '',
-            () async {
-              add(SelectMarkerEvent(const MarkerId('MyLocation')));
-            },
-          );
-
-          markersSet.add(marker);
-
-          emit(state.copyWith(
-            position: position,
-            nearbyPlaces: nearbyPlaces,
-            availableCategories: categories,
-            markers: _createMarkersFromPlaces(nearbyPlaces),
-          ));
         } catch (e) {
           emit(state.copyWith(errorMessage: e.toString()));
         }
@@ -184,31 +188,21 @@ class GeolocatorBloc extends Bloc<GeolocatorEvent, GeolocatorState> {
       },
     );
 
-    on<OnCameraMove>((event, emit) {
-      emit(state.copyWith(cameraPosition: event.cameraPosition));
-    });
-
     on<OnSearchPlacesEvent>(
       (event, emit) async {
         try {
-          List<Result> searchResults = await searchPlacesUseCase.run(
-            event.query,
+          List<Result> searchResults = await nearbyPlacesUseCase.run(
             position?.latitude ?? 0.0,
             position?.longitude ?? 0.0,
           );
 
-          tempNearbyPlace = searchResults.where((result) {
-            return result.categories?.any((category) =>
-                    category.pluralName
-                        ?.toLowerCase()
-                        .contains(event.query.toLowerCase()) ??
-                    false) ??
-                false;
+          List<Result> searchTemp = searchResults.where((result) {
+            return result.name!
+                .toLowerCase()
+                .contains(event.query.toLowerCase());
           }).toList();
-
           emit(state.copyWith(
-            nearbyPlaces: searchResults,
-            tempNearbyPlaces: tempNearbyPlace,
+            nearbyPlaces: searchTemp,
             query: event.query,
           ));
         } catch (e) {
@@ -217,43 +211,46 @@ class GeolocatorBloc extends Bloc<GeolocatorEvent, GeolocatorState> {
       },
     );
   }
+
+  Map<MarkerId, Marker> _createMarkersForCurrentPosition(Position position) {
+    return {
+      const MarkerId('MyLocation'): Marker(
+        markerId: const MarkerId('MyLocation'),
+        position: LatLng(position.latitude, position.longitude),
+        infoWindow: const InfoWindow(title: 'My Location'),
+        onTap: () {
+          add(SelectMarkerEvent(const MarkerId('MyLocation')));
+        },
+      ),
+    };
+  }
+
+  Map<MarkerId, Marker> _createMarkersFromPlaces(List<Result> places) {
+    final markers = _createMarkersForCurrentPosition(position!);
+
+    for (var place in places) {
+      final markerId = MarkerId(place.fsqId.toString());
+      markers[markerId] = Marker(
+        markerId: markerId,
+        position: LatLng(
+          place.geocodes?.main?.latitude?.toDouble() ?? 0.0,
+          place.geocodes?.main?.longitude?.toDouble() ?? 0.0,
+        ),
+        infoWindow: InfoWindow(
+            title: place.name.toString(),
+            snippet: place.location?.address ?? ''),
+        onTap: () {
+          add(SelectMarkerEvent(markerId));
+        },
+      );
+    }
+
+    return markers;
+  }
+
   @override
   Future<void> close() {
     _connectivitySubscription?.cancel();
     return super.close();
-  }
-
-  Map<MarkerId, Marker> _createMarkersFromPlaces(List<Result> places) {
-    Map<MarkerId, Marker> newMarkers = {};
-
-    if (state.position != null) {
-      Marker myLocationMarker = geolocatorUseCase.getMarker.run(
-        'MyLocation',
-        state.position?.latitude ?? 0.0,
-        state.position?.longitude ?? 0.0,
-        'My position',
-        '',
-        () {
-          add(SelectMarkerEvent(const MarkerId('MyLocation')));
-        },
-      );
-      newMarkers[myLocationMarker.markerId] = myLocationMarker;
-    }
-
-    for (var place in places) {
-      Marker marker = geolocatorUseCase.getMarker.run(
-        place.fsqId.toString(),
-        place.geocodes?.main?.latitude?.toDouble() ?? 0.0,
-        place.geocodes?.main?.longitude?.toDouble() ?? 0.0,
-        place.name.toString(),
-        '',
-        () {
-          add(SelectMarkerEvent(MarkerId(place.fsqId.toString())));
-        },
-      );
-      newMarkers[marker.markerId] = marker;
-    }
-
-    return newMarkers;
   }
 }

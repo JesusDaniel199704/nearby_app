@@ -11,7 +11,6 @@ class GeolocatorState extends Equatable {
   final MarkerId? selectedMarker;
   final Position? position;
   final List<Result>? nearbyPlaces;
-  final List<Result>? tempNearbyPlaces;
   final Map<MarkerId, Marker> markers;
   final bool isLoadingCategories;
   final List<String>? filterList;
@@ -22,9 +21,9 @@ class GeolocatorState extends Equatable {
     this.controller,
     this.errorMessage = '',
     this.availableCategories = const {},
-    this.hasInternetConnection = true,
+    this.hasInternetConnection = false,
     this.isLoadingCategories = false,
-    this.hasGpsEnabled = true,
+    this.hasGpsEnabled = false,
     this.selectedFilters = const [],
     this.cameraPosition = const CameraPosition(
       target: LatLng(37.32463648, -122.02314348),
@@ -36,7 +35,6 @@ class GeolocatorState extends Equatable {
     this.isSelected = false,
     this.markers = const <MarkerId, Marker>{},
     this.nearbyPlaces,
-    this.tempNearbyPlaces,
     this.position,
     this.selectedMarker,
   });
@@ -49,7 +47,6 @@ class GeolocatorState extends Equatable {
     Position? position,
     CameraPosition? cameraPosition,
     List<Result>? nearbyPlaces,
-    List<Result>? tempNearbyPlaces,
     List<String>? filterList,
     Set<String>? availableCategories,
     String? errorMessage,
@@ -72,7 +69,6 @@ class GeolocatorState extends Equatable {
       selectedFilters: selectedFilters ?? this.selectedFilters,
       errorMessage: errorMessage ?? this.errorMessage,
       filterList: filterList ?? this.filterList,
-      tempNearbyPlaces: tempNearbyPlaces ?? this.tempNearbyPlaces,
       isExpanded: isExpanded ?? this.isExpanded,
       isSelected: isSelected ?? this.isSelected,
       markers: markers ?? this.markers,
@@ -91,8 +87,9 @@ class GeolocatorState extends Equatable {
         filterList ?? [],
         errorMessage,
         isExpanded,
-        tempNearbyPlaces ?? [],
         markers,
+        hasInternetConnection,
+        hasGpsEnabled,
         query,
         nearbyPlaces ?? [],
         position ?? 0,

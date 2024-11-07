@@ -4,18 +4,6 @@ import 'package:nearby_app/features/geolocator/domain/repositories/geolocator_re
 
 class LocationRepositoryImpl implements GeolocatorRepository {
   @override
-  Marker getMarker(String markerId, double lat, double lng, String title,
-      String content, Function() onTap) {
-    MarkerId id = MarkerId(markerId);
-    Marker marker = Marker(
-        markerId: id,
-        onTap: onTap,
-        position: LatLng(lat, lng),
-        infoWindow: InfoWindow(title: title, snippet: content));
-    return marker;
-  }
-
-  @override
   Future<Position> findPosition() async {
     bool serviceEnabled;
     LocationPermission permission;
